@@ -1,3 +1,5 @@
+// frontend/src/app/page.js
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -41,11 +43,6 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      {/* Debug information */}
-      <div style={{ marginTop: '20px', padding: '10px', background: '#f5f5f5', color: 'black' }}>
-        <p>API URL: {process.env.NEXT_PUBLIC_API_URL || 'Not set'}</p>
-      </div>
-      
       <h1 className="page-title">Bizniz Manager Dashboard</h1>
       
       <section className={styles.section}>
@@ -55,34 +52,7 @@ export default function Home() {
             Add New Company
           </Link>
         </div>
-
-        <div style={{ marginTop: '20px' }}>
-  <button 
-    style={{ 
-      padding: '10px 15px', 
-      backgroundColor: '#0070f3', 
-      color: 'white', 
-      border: 'none', 
-      borderRadius: '4px',
-      cursor: 'pointer'
-    }}
-    onClick={async () => {
-      try {
-        console.log('Testing direct API call to:', 'https://basicbend-h5zb4euj.b4a.run/api/companies');
-        const response = await fetch('https://basicbend-h5zb4euj.b4a.run/api/companies');
-        const data = await response.json();
-        console.log('Direct API call result:', data);
-        alert('API call successful! Check console for details.');
-      } catch (error) {
-        console.error('Direct API call error:', error);
-        alert('API call failed! Check console for details.');
-      }
-    }}
-  >
-    Test Direct API Call
-  </button>
-</div>
-
+        
         {companies.length === 0 ? (
           <p>No companies found. Create your first company!</p>
         ) : (
