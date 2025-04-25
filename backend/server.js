@@ -14,7 +14,7 @@ connectDB();
 app.use(cors({
   origin: [
     "http://localhost:3000", 
-    "https://repo-ten-alpha.vercel.app",
+    "https://repo-ten-alpha.vercel.app.back4app.io/api",
     "https://repo-git-master-martin-janssons-projects.vercel.app",
     "https://repo-5gx9i5zf4-martin-janssons-projects.vercel.app"
   ],
