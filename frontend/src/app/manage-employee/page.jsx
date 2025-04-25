@@ -1,0 +1,135 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { getEmployees, deleteEmployee } from "../utils/api";
+import styles from "./page.module.css";
+
+export default function ManageEmployee() {
+  const router = useRouter();
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+  
+  const fetchEmployees = async () => {
+    try {
+      const data = await getEmployees();
+      setEmployees(data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching employees:", err);
+      setError("Failed to load employees. Please try again later.");
+      setLoading(false);
+    }
+  };
+  
+  const handleDelete = async (id) => {
+    try {
+      await deleteEmployee(id);
+      // Update the local state
+      setEmployees(employees.filter(employee => employee._id !== id));
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error("Error deleting employee:", err);
+      setError(err.response?.data?.message || "Failed to delete employee. Please try again.");
+    }
+  };
+  
+  if (loading) {
+    return <div className={styles.loading}>Loading employees...</div>;
+  }
+  
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          <p>{error}</p>
+          <button onClick={fetchEmployees} className="button button-primary">
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1 className="page-title">Manage Employees</h1>
+        <Link href="/create-employee" className="button button-primary">
+          Add New Employee
+        </Link>
+      </div>
+      
+      {employees.length === 0 ? (
+        <div className={styles.empty}>
+          <p>No employees found. Add your first employee!</p>
+          <Link href="/create-employee" className="button button-primary">
+            Create Employee
+          </Link>
+        </div>
+      ) : (
+        <div className={styles.employeeList}>
+          {employees.map((employee) => (
+            <div key={employee._id} className="card">
+              <div className="card-header">
+                <h2>{employee.firstName} {employee.lastName}</h2>
+                <div className="card-actions">
+                  <Link 
+                    href={`/manage-employee/edit?id=${employee._id}`}
+                    className="button button-primary"
+                  >
+                    Edit
+                  </Link>
+                  <button 
+                    className="button button-danger"
+                    onClick={() => setDeleteConfirm(employee._id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+              
+              <div className={styles.employeeDetails}>
+                <p><strong>Position:</strong> {employee.position}</p>
+                <p><strong>Company:</strong> {employee.company?.name || "Unknown"}</p>
+                {employee.startDate && (
+                  <p><strong>Start Date:</strong> {new Date(employee.startDate).toLocaleDateString()}</p>
+                )}
+                {employee.contractLength && (
+                  <p><strong>Contract Length:</strong> {employee.contractLength} months</p>
+                )}
+              </div>
+              
+              {deleteConfirm === employee._id && (
+                <div className={styles.confirmDelete}>
+                  <p>Are you sure you want to delete this employee?</p>
+                  <div className={styles.confirmButtons}>
+                    <button 
+                      onClick={() => handleDelete(employee._id)}
+                      className="button button-danger"
+                    >
+                      Yes, Delete
+                    </button>
+                    <button 
+                      onClick={() => setDeleteConfirm(null)}
+                      className="button"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

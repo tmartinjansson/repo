@@ -1,0 +1,33 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .content {
+    flex: 1;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .pageWrapper {
+    padding: 2rem 0;
+  }
+  
+  .section {
+    margin-bottom: 2rem;
+  }
+  
+  .flexBetween {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }

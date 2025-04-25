@@ -1,0 +1,41 @@
+.container {
+  width: 100%;
+}
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.cardActions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: red;
+  text-align: center;
+  padding: 2rem;
+  background-color: #fff3f3;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
