@@ -12,10 +12,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: [
-    "http://localhost:3000", 
-    /https:\/\/repo-.*\.vercel\.app$/
-  ],
+  origin: '*',  // Allow all origins temporarily for testing
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));

@@ -55,7 +55,34 @@ export default function Home() {
             Add New Company
           </Link>
         </div>
-        
+
+        <div style={{ marginTop: '20px' }}>
+  <button 
+    style={{ 
+      padding: '10px 15px', 
+      backgroundColor: '#0070f3', 
+      color: 'white', 
+      border: 'none', 
+      borderRadius: '4px',
+      cursor: 'pointer'
+    }}
+    onClick={async () => {
+      try {
+        console.log('Testing direct API call to:', 'https://basicbend-h5zb4euj.b4a.run/api/companies');
+        const response = await fetch('https://basicbend-h5zb4euj.b4a.run/api/companies');
+        const data = await response.json();
+        console.log('Direct API call result:', data);
+        alert('API call successful! Check console for details.');
+      } catch (error) {
+        console.error('Direct API call error:', error);
+        alert('API call failed! Check console for details.');
+      }
+    }}
+  >
+    Test Direct API Call
+  </button>
+</div>
+
         {companies.length === 0 ? (
           <p>No companies found. Create your first company!</p>
         ) : (
