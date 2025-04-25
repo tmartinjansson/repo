@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { getCompany, updateCompany } from "../../utils/api";
 import styles from "./page.module.css";
 
-export default function EditCompany() {
+// Create a client component that uses useSearchParams
+function EditCompanyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
@@ -157,5 +158,14 @@ export default function EditCompany() {
         </form>
       </div>
     </div>
+  );
+}
+
+// Wrap with Suspense
+export default function EditCompany() {
+  return (
+    <Suspense fallback={<div className={styles.loading}>Loading...</div>}>
+      <EditCompanyForm />
+    </Suspense>
   );
 }

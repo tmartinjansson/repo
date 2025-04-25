@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { getEmployee, updateEmployee, getCompanies } from "../../utils/api";
 import styles from "./page.module.css";
 
-export default function EditEmployee() {
+// Create a client component that uses useSearchParams
+function EditEmployeeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
@@ -86,6 +87,8 @@ export default function EditEmployee() {
       
       <div className="form-container">
         <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Form content stays the same */}
+          {/* ... */}
           <div className="form-group">
             <label className="form-label" htmlFor="firstName">First Name *</label>
             <input
@@ -205,5 +208,14 @@ export default function EditEmployee() {
         </form>
       </div>
     </div>
+  );
+}
+
+// Wrap with Suspense
+export default function EditEmployee() {
+  return (
+    <Suspense fallback={<div className={styles.loading}>Loading...</div>}>
+      <EditEmployeeForm />
+    </Suspense>
   );
 }
