@@ -12,10 +12,16 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: '*',  // Allow all origins temporarily for testing
+  origin: [
+    "http://localhost:3000",
+    "https://repo-ten-alpha.vercel.app",
+    // Add other Vercel domains if needed
+  ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
+
+
 app.use(express.json());
 
 
