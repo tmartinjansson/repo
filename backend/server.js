@@ -12,7 +12,12 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: "*",  // This allows requests from any origin
+  origin: [
+    "http://localhost:3000", 
+    "https://repo-ten-alpha.vercel.app",
+    "https://repo-git-master-martin-janssons-projects.vercel.app",
+    "https://repo-5gx9i5zf4-martin-janssons-projects.vercel.app"
+  ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
