@@ -41,6 +41,11 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
+      {/* Debug information */}
+      <div style={{ marginTop: '20px', padding: '10px', background: '#f5f5f5', color: 'black' }}>
+        <p>API URL: {process.env.NEXT_PUBLIC_API_URL || 'Not set'}</p>
+      </div>
+      
       <h1 className="page-title">Bizniz Manager Dashboard</h1>
       
       <section className={styles.section}>
