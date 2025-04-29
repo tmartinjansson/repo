@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { createCompany } from "../utils/api";
@@ -10,32 +10,59 @@ export default function CreateCompany() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [responseMessage, setResponseMessage] = useState("");
   
   const { 
     register, 
     handleSubmit, 
-    formState: { errors } 
+    formState: { errors },
+    reset
   } = useForm();
+
+  useEffect(() => {
+    let timer;
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        setIsSuccess(false);
+        setResponseMessage("");
+      }, 5000);
+    }
+      return () => clearTimeout(timer);
+    }, [isSuccess]);
+    
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setError("");
+    setIsSuccess(false);
+    setResponseMessage("");
     
     try {
       await createCompany(data);
-      router.push("/");
+      setIsSuccess(true);
+      setResponseMessage("Company created successfully!");
+      reset();
+      setIsSubmitting(false);
+    
     } catch (err) {
       console.error("Error creating company:", err);
       setError(err.response?.data?.message || "Failed to create company. Please try again.");
       setIsSubmitting(false);
     }
   };
-
+ 
   return (
     <div className={styles.container}>
       <h1 className="page-title">Create New Company</h1>
       
-      {error && <div className={styles.error}>{error}</div>}
+      {isSuccess && responseMessage && (
+        <div className="successMessage">
+          <p>{responseMessage}</p>
+          </div>
+      )}
+
+      {error && <div className="errorMessage">{error}</div>}
       
       <div className="form-container">
         <form onSubmit={handleSubmit(onSubmit)}>
