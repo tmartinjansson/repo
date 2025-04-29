@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getCompanies, deleteCompany } from "../utils/api";
+import { formatDate } from "../utils/dateUtils";
 import styles from "./page.module.css";
 
 export default function ManageCompany() {
@@ -95,6 +96,10 @@ export default function ManageCompany() {
                   >
                     Delete
                   </button>
+                  <div className="card-dates">
+                    <p>Last updated: {formatDate(company.updatedAt)}</p>
+                    <p>Created: {formatDate(company.createdAt)}</p>
+                  </div>  
                 </div>
               </div>
               

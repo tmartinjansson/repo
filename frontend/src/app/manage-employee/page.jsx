@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getEmployees, deleteEmployee } from "../utils/api";
+import { formatDate } from "../utils/dateUtils";
 import styles from "./page.module.css";
 
 export default function ManageEmployee() {
@@ -93,6 +94,10 @@ export default function ManageEmployee() {
                   >
                     Delete
                   </button>
+                    <div className="card-dates">
+                      <p>Last updated: {formatDate(employee.updatedAt)}</p>
+                      <p>Created: {formatDate(employee.createdAt)}</p>
+                    </div>  
                 </div>
               </div>
               
