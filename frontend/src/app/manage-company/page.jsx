@@ -13,6 +13,7 @@ export default function ManageCompany() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
   
   useEffect(() => {
     fetchCompanies();
@@ -38,7 +39,22 @@ export default function ManageCompany() {
       setDeleteConfirm(null);
     } catch (err) {
       console.error("Error deleting company:", err);
-      setError(err.response?.data?.message || "Failed to delete company. Please try again.");
+      setDeleteError(err.response?.data?.message || "Failed to delete company. Please try again.");
+    }
+  };
+  
+  const handleDeleteClick = (company) => {
+    if (company.employeeCount > 0) {
+      // Set error message when trying to delete a company with employees
+      setDeleteError(`Cannot delete "${company.name}" because it has ${company.employeeCount} employees.`);
+      // Auto-clear the error after 5 seconds
+      setTimeout(() => {
+        setDeleteError(null);
+      }, 5000);
+    } else {
+      // Clear any previous error and show confirmation
+      setDeleteError(null);
+      setDeleteConfirm(company._id);
     }
   };
   
@@ -68,6 +84,12 @@ export default function ManageCompany() {
         </Link>
       </div>
       
+      {deleteError && (
+        <div className="errorMessage">
+          <p>{deleteError}</p>
+        </div>
+      )}
+      
       {companies.length === 0 ? (
         <div className={styles.empty}>
           <p>No companies found. Create your first company!</p>
@@ -90,9 +112,7 @@ export default function ManageCompany() {
                   </Link>
                   <button 
                     className="button button-danger"
-                    onClick={() => setDeleteConfirm(company._id)}
-                    disabled={company.employeeCount > 0}
-                    title={company.employeeCount > 0 ? "Cannot delete company with employees" : ""}
+                    onClick={() => handleDeleteClick(company)}
                   >
                     Delete
                   </button>

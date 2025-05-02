@@ -35,7 +35,22 @@ router.post("/", async (req, res) => {
       return res.status(404).json({ message: "Company not found" });
     }
 
-    const employee = new Employee(req.body);
+    // Extract contract length components if provided
+    const contractLengthYears = req.body.contractLengthYears || 0;
+    const contractLengthMonths = req.body.contractLengthMonths || 0;
+    
+    // Calculate total months for compatibility
+    const totalContractLength = (contractLengthYears * 12) + contractLengthMonths;
+    
+    // Create employee data with the combined values
+    const employeeData = {
+      ...req.body,
+      contractLength: totalContractLength,
+      contractLengthYears: contractLengthYears,
+      contractLengthMonths: contractLengthMonths
+    };
+
+    const employee = new Employee(employeeData);
     const savedEmployee = await employee.save();
     
     // Update company's employee count
@@ -79,10 +94,35 @@ router.put("/:id", async (req, res) => {
       );
     }
     
-    // Update employee
+    // Process contract length updates if provided
+    let updateData = { ...req.body };
+    
+    if (req.body.contractLengthYears !== undefined || req.body.contractLengthMonths !== undefined) {
+      // Get current values to use as defaults
+      const currentYears = req.body.contractLengthYears !== undefined 
+        ? req.body.contractLengthYears 
+        : (employee.contractLengthYears || 0);
+        
+      const currentMonths = req.body.contractLengthMonths !== undefined 
+        ? req.body.contractLengthMonths 
+        : (employee.contractLengthMonths || 0);
+      
+      // Calculate new total
+      const totalContractLength = (currentYears * 12) + currentMonths;
+      
+      // Update data with calculated values
+      updateData = {
+        ...updateData,
+        contractLength: totalContractLength,
+        contractLengthYears: currentYears,
+        contractLengthMonths: currentMonths
+      };
+    }
+    
+    // Update employee with processed data
     const updatedEmployee = await Employee.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     ).populate("company", "name location");
     

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getEmployees, deleteEmployee } from "../utils/api";
-import { formatDate } from "../utils/dateUtils";
+import { formatDate, formatContractLength} from "../utils/dateUtils";
 import styles from "./page.module.css";
 
 export default function ManageEmployee() {
@@ -80,7 +80,7 @@ export default function ManageEmployee() {
           {employees.map((employee) => (
             <div key={employee._id} className="card">
               <div className="card-header">
-                <h2>{employee.firstName} {employee.lastName}</h2>
+                <h2>{employee.name} {employee.surname}</h2>
                 <div className="card-actions">
                   <Link 
                     href={`/manage-employee/edit?id=${employee._id}`}
@@ -107,8 +107,8 @@ export default function ManageEmployee() {
                 {employee.startDate && (
                   <p><strong>Start Date:</strong> {new Date(employee.startDate).toLocaleDateString()}</p>
                 )}
-                {employee.contractLength && (
-                  <p><strong>Contract Length:</strong> {employee.contractLength} months</p>
+                {employee.contractLength !== undefined && (
+                <p><strong>Contract Length:</strong> {formatContractLength(employee.contractLength)}</p>
                 )}
               </div>
               

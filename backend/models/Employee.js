@@ -2,19 +2,19 @@ const mongoose = require("mongoose");
 
 const EmployeeSchema = mongoose.Schema(
   {
-    firstName: {
+    surname: {
       type: String,
-      required: [true, "First name is required"],
+      required: [true, "Surname is required"],
       trim: true
     },
-    lastName: {
+    name: {
       type: String,
-      required: [true, "Last name is required"],
+      required: [true, "Name is required"],
       trim: true
     },
     position: {
       type: String,
-      required: [true, "Position is required"],
+      required: [false, "Position is not required"],
       trim: true
     },
     company: {
@@ -24,7 +24,15 @@ const EmployeeSchema = mongoose.Schema(
     },
     contractLength: {
       type: Number,
-      default: 12 // default contract length in months
+      default: 0 // default contract length in months
+    },
+    contractLengthYears: {
+      type: Number,
+      default: 0
+    },
+    contractLengthMonths: {
+      type: Number,
+      default: 0
     },
     startDate: {
       type: Date,

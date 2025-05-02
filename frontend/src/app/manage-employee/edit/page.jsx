@@ -1,69 +1,232 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { getEmployee, updateEmployee, getCompanies } from "../../utils/api";
 import styles from "./page.module.css";
 
-// Create a client component that uses useSearchParams
-function EditEmployeeForm() {
+export default function EditEmployee() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id");
+  const [employee, setEmployee] = useState(null);
+  const [companies, setCompanies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [companies, setCompanies] = useState([]);
+  const [responseMessage, setResponseMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // State for contract length
+  const [contractYears, setContractYears] = useState(0);
+  const [contractMonths, setContractMonths] = useState(0);
   
   const { 
     register, 
-    handleSubmit, 
+    handleSubmit,
+    setValue,
     formState: { errors },
-    reset 
-  } = useForm();
+    reset
+  } = useForm({
+    defaultValues: {
+      contractLengthYears: 0,
+      contractLengthMonths: 0
+    }
+  });
+
+  //fix server-client mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
-    if (!id) {
-      router.push("/manage-employee");
-      return;
-    }
+    // Get the employee ID from the URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get("id");
     
-    const fetchData = async () => {
+    if (id) {
+      fetchEmployee(id);
+    } else {
+      setError("No employee ID provided");
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer;
+    if (isSuccess) {
+      timer = setTimeout(() => {
+        setIsSuccess(false);
+        setResponseMessage("");
+      }, 5000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isSuccess]);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
       try {
-        // Fetch companies and employee data in parallel
-        const [employeeData, companiesData] = await Promise.all([
-          getEmployee(id),
-          getCompanies()
-        ]);
-        
-        // Convert date string to yyyy-MM-dd format for input[type="date"]
-        if (employeeData.startDate) {
-          const date = new Date(employeeData.startDate);
-          employeeData.startDate = date.toISOString().split('T')[0];
-        }
-        
-        // Pre-fill the form with existing data
-        reset(employeeData);
-        setCompanies(companiesData);
+        const data = await getCompanies();
+        setCompanies(data);
         setIsLoading(false);
       } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load employee details. Please try again later.");
+        console.error("Error fetching companies:", err);
+        setError("Failed to load companies. Please try again later.");
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, [id, reset, router]);
+    fetchCompanies();
+  }, []);
+
+  useEffect(() => {
+    let timer;
+    if (isSuccess) {
+      timer = setTimeout(() => {
+        setIsSuccess(false);
+        setResponseMessage("");
+      }, 5000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isSuccess]);
+
+
+  const fetchEmployee = async (id) => {
+    try {
+      const data = await getEmployee(id);
+      setEmployee(data);
+      
+      // Populate form with employee data
+      reset({
+        name: data.name,
+        surname: data.surname,
+        position: data.position,
+        company: data.company?._id,
+        startDate: data.startDate ? new Date(data.startDate).toISOString().split("T")[0] : "",
+        contractLengthYears: Math.floor(data.contractLength / 12) || 0,
+        contractLengthMonths: data.contractLength % 12 || 0
+      });
+      
+      // Set contract length state
+      setContractYears(Math.floor(data.contractLength / 12) || 0);
+      setContractMonths(data.contractLength % 12 || 0);
+      
+    } catch (err) {
+      console.error("Error fetching employee:", err);
+      setError("Failed to load employee. Please try again later.");
+    }
+  };
+
+  // Handle changes to contract length
+  const handleYearsChange = (e) => {
+    const value = parseInt(e.target.value) || 0;
+    setContractYears(value >= 0 ? value : 0);
+    setValue("contractLengthYears", value >= 0 ? value : 0);
+  };
+
+  const handleMonthsChange = (e) => {
+    let value = parseInt(e.target.value) || 0;
+    
+    // Handle values outside of 0-11 range
+    if (value > 11) {
+      // Roll over to years
+      const additionalYears = Math.floor(value / 12);
+      const remainingMonths = value % 12;
+      
+      const newYears = contractYears + additionalYears;
+      setContractYears(newYears);
+      setValue("contractLengthYears", newYears);
+      
+      value = remainingMonths;
+    } else if (value < 0) {
+      // Only allow negative rollover if we have years to deduct from
+      if (contractYears > 0) {
+        const newYears = contractYears - 1;
+        setContractYears(newYears);
+        setValue("contractLengthYears", newYears);
+        value = 12 + value; // value is negative, so this is 12 - |value|
+      } else {
+        // Can't go below 0 years and 0 months
+        value = 0;
+      }
+    }
+    
+    setContractMonths(value);
+    setValue("contractLengthMonths", value);
+  };
+
+  // Increment/decrement buttons handlers
+  const incrementMonths = () => {
+    const newValue = contractMonths + 1;
+    if (newValue > 11) {
+      setContractYears(contractYears + 1);
+      setContractMonths(0);
+      setValue("contractLengthYears", contractYears + 1);
+      setValue("contractLengthMonths", 0);
+    } else {
+      setContractMonths(newValue);
+      setValue("contractLengthMonths", newValue);
+    }
+  };
+
+  const decrementMonths = () => {
+    if (contractMonths > 0) {
+      setContractMonths(contractMonths - 1);
+      setValue("contractLengthMonths", contractMonths - 1);
+    } else if (contractYears > 0) {
+      setContractYears(contractYears - 1);
+      setContractMonths(11);
+      setValue("contractLengthYears", contractYears - 1);
+      setValue("contractLengthMonths", 11);
+    }
+  };
+
+  const incrementYears = () => {
+    setContractYears(contractYears + 1);
+    setValue("contractLengthYears", contractYears + 1);
+  };
+
+  const decrementYears = () => {
+    if (contractYears > 0) {
+      setContractYears(contractYears - 1);
+      setValue("contractLengthYears", contractYears - 1);
+    }
+  };
 
   const onSubmit = async (data) => {
+    if (!employee) return;
+    
     setIsSubmitting(true);
     setError("");
+    setIsSuccess(false);
+    setResponseMessage("");
     
     try {
-      await updateEmployee(id, data);
-      router.push("/manage-employee");
+      console.log("Contract Length Data:", {
+        years: data.contractLengthYears,
+        months: data.contractLengthMonths
+      });
+      
+      // Calculate total contract length in months
+      const totalContractLength = 
+        (Number(data.contractLengthYears) || 0) * 12 + (Number(data.contractLengthMonths) || 0);
+      
+      console.log("Calculated total months:", totalContractLength);
+
+      // Update employee data with total contract length
+      const employeeData = {
+        ...data,
+        contractLength: totalContractLength
+      };
+
+      await updateEmployee(employee._id, employeeData);
+      setIsSuccess(true);
+      setResponseMessage("Employee updated successfully!");
+      setIsSubmitting(false);
+    
     } catch (err) {
       console.error("Error updating employee:", err);
       setError(err.response?.data?.message || "Failed to update employee. Please try again.");
@@ -71,151 +234,254 @@ function EditEmployeeForm() {
     }
   };
 
-  if (!id) {
-    return null; // Will redirect in useEffect
+  if (isLoading && !employee) {
+    return <div className={styles.loading}>Loading...</div>;
   }
 
-  if (isLoading) {
-    return <div className={styles.loading}>Loading employee details...</div>;
-  }
 
+// Check if there are no companies
+if (companies.length === 0 && !isLoading) {
   return (
     <div className={styles.container}>
       <h1 className="page-title">Edit Employee</h1>
-      
-      {error && <div className={styles.error}>{error}</div>}
-      
-      <div className="form-container">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          {/* Form content stays the same */}
-          {/* ... */}
-          <div className="form-group">
-            <label className="form-label" htmlFor="firstName">First Name *</label>
-            <input
-              id="firstName"
-              className="form-input"
-              type="text"
-              placeholder="Enter first name"
-              {...register("firstName", { 
-                required: "First name is required" 
-              })}
-            />
-            {errors.firstName && (
-              <p className="form-error">{errors.firstName.message}</p>
-            )}
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label" htmlFor="lastName">Last Name *</label>
-            <input
-              id="lastName"
-              className="form-input"
-              type="text"
-              placeholder="Enter last name"
-              {...register("lastName", { 
-                required: "Last name is required" 
-              })}
-            />
-            {errors.lastName && (
-              <p className="form-error">{errors.lastName.message}</p>
-            )}
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label" htmlFor="position">Position *</label>
-            <input
-              id="position"
-              className="form-input"
-              type="text"
-              placeholder="Enter position"
-              {...register("position", { 
-                required: "Position is required" 
-              })}
-            />
-            {errors.position && (
-              <p className="form-error">{errors.position.message}</p>
-            )}
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label" htmlFor="company">Company *</label>
-            <select
-              id="company"
-              className="form-input"
-              {...register("company", { 
-                required: "Company is required" 
-              })}
-            >
-              {companies.map((company) => (
-                <option key={company._id} value={company._id}>
-                  {company.name} - {company.location}
-                </option>
-              ))}
-            </select>
-            {errors.company && (
-              <p className="form-error">{errors.company.message}</p>
-            )}
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label" htmlFor="contractLength">
-              Contract Length (months)
-            </label>
-            <input
-              id="contractLength"
-              className="form-input"
-              type="number"
-              placeholder="Enter contract length in months"
-              {...register("contractLength", { 
-                valueAsNumber: true,
-                min: {
-                  value: 1,
-                  message: "Contract length must be at least 1 month"
-                }
-              })}
-            />
-            {errors.contractLength && (
-              <p className="form-error">{errors.contractLength.message}</p>
-            )}
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label" htmlFor="startDate">Start Date</label>
-            <input
-              id="startDate"
-              className="form-input"
-              type="date"
-              {...register("startDate")}
-            />
-          </div>
-          
-          <div className={styles.formActions}>
-            <button 
-              type="button" 
-              className={styles.cancelButton}
-              onClick={() => router.back()}
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="form-button"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Updating..." : "Update Employee"}
-            </button>
-          </div>
-        </form>
+      <div className={styles.notice}>
+        <p>You need to create at least one company before editing employees.</p>
+        <button 
+          onClick={() => router.push("/create-company")}
+          className="form-button"
+        >
+          Create Company
+        </button>
       </div>
     </div>
   );
 }
 
-// Wrap with Suspense
-export default function EditEmployee() {
+
   return (
-    <Suspense fallback={<div className={styles.loading}>Loading...</div>}>
-      <EditEmployeeForm />
-    </Suspense>
+    <div className={styles.container}>
+      <h1 className="page-title">Edit Employee</h1>
+      
+      {isMounted && isSuccess && responseMessage && (
+        <div className="successMessage">
+          <p>{responseMessage}</p>
+        </div>
+      )}
+
+      {isMounted && error && <div className="errorMessage">{error}</div>}
+      
+      {isMounted && employee ? (
+        <div className="form-container">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="name">First Name</label>
+              <input
+                id="name"
+                className="form-input"
+                type="text"
+                placeholder="First name is required"
+                {...register("name", { 
+                  required: "First name is required" 
+                })}
+              />
+              {errors.name && (
+                <p className="form-error">{errors.name.message}</p>
+              )}
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label" htmlFor="surname">Last Name</label>
+              <input
+                id="surname"
+                className="form-input"
+                type="text"
+                placeholder="Last name is required"
+                {...register("surname", { 
+                  required: "Last name is required" 
+                })}
+              />
+              {errors.surname && (
+                <p className="form-error">{errors.surname.message}</p>
+              )}
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label" htmlFor="position">Position</label>
+              <input
+                id="position"
+                className="form-input"
+                type="text"
+                placeholder="Position is not required"
+                {...register("position")}
+              />
+              {errors.position && (
+                <p className="form-error">{errors.position.message}</p>
+              )}
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label" htmlFor="company">Company</label>
+              <select
+               id="company"
+               className="form-input"
+               {...register("company", { 
+                  required: "Company is required" 
+                })}
+            >
+           <option value="">Select a company</option>
+           {companies.map((company) => (
+             <option key={company._id} value={company._id}>
+                {company.name} - {company.location}
+            </option>
+            ))}
+            </select>
+              {errors.company && (
+                <p className="form-error">{errors.company.message}</p>
+              )}
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label" htmlFor="startDate">Start Date</label>
+              <input
+                id="startDate"
+                className="form-input"
+                type="date"
+                {...register("startDate")}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Contract Length</label>
+              
+              <div className="contract-length-container" style={{ display: "flex", marginBottom: "10px" }}>
+                <div style={{ marginRight: "20px" }}>
+                  <label htmlFor="contractLengthYears" style={{ marginRight: "10px" }}>Years:</label>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <button 
+                      type="button" 
+                      onClick={decrementYears}
+                      className="contract-btn"
+                      disabled={contractYears === 0}
+                      style={{ padding: "0 10px", marginRight: "5px" }}
+                    >
+                      -
+                    </button>
+                    <input
+                      id="contractLengthYears"
+                      className="form-input"
+                      type="number"
+                      value={contractYears}
+                      min="0"
+                      placeholder="Years"
+                      onChange={handleYearsChange}
+                      style={{ width: "70px", textAlign: "center" }}
+                      {...register("contractLengthYears", { 
+                        valueAsNumber: true,
+                        min: {
+                          value: 0,
+                          message: "Years cannot be negative"
+                        }
+                      })}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={incrementYears}
+                      className="contract-btn"
+                      style={{ padding: "0 10px", marginLeft: "5px" }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label htmlFor="contractLengthMonths" style={{ marginRight: "10px" }}>Months:</label>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <button 
+                      type="button" 
+                      onClick={decrementMonths}
+                      className="contract-btn"
+                      disabled={contractYears === 0 && contractMonths === 0}
+                      style={{ padding: "0 10px", marginRight: "5px" }}
+                    >
+                      -
+                    </button>
+                    <input
+                      id="contractLengthMonths"
+                      className="form-input"
+                      type="number"
+                      value={contractMonths}
+                      min="0"
+                      max="11"
+                      placeholder="Months"
+                      onChange={handleMonthsChange}
+                      style={{ width: "70px", textAlign: "center" }}
+                      {...register("contractLengthMonths", { 
+                        valueAsNumber: true,
+                        min: {
+                          value: 0,
+                          message: "Months cannot be negative"
+                        },
+                        max: {
+                          value: 11,
+                          message: "Use years field for 12+ months"
+                        },
+                        validate: {
+                          atLeastOneMonth: (value, formValues) => 
+                            (Number(formValues.contractLengthYears) > 0 || Number(value) > 0) || 
+                            "Total contract length must be at least 1 month"
+                        }
+                      })}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={incrementMonths}
+                      className="contract-btn"
+                      style={{ padding: "0 10px", marginLeft: "5px" }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {(errors.contractLengthYears || errors.contractLengthMonths) && (
+                <p className="form-error">
+                  {errors.contractLengthYears?.message || errors.contractLengthMonths?.message}
+                </p>
+              )}
+              
+              <p className="contract-total">
+                Total: {contractYears > 0 ? `${contractYears} year${contractYears !== 1 ? 's' : ''}` : ''}
+                {contractYears > 0 && contractMonths > 0 ? ' and ' : ''}
+                {contractMonths > 0 ? `${contractMonths} month${contractMonths !== 1 ? 's' : ''}` : ''}
+                {contractYears === 0 && contractMonths === 0 ? '0 months' : ''}
+              </p>
+            </div>
+            
+            <div className={styles.formActions}>
+              <button 
+                type="button" 
+                className={styles.cancelButton}
+                onClick={() => router.back()}
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                className="form-button"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Updating..." : "Update Employee"}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : !error && (
+        <div className="loading-container">
+          <p>Loading employee data...</p>
+        </div>
+      )}
+    </div>
   );
 }

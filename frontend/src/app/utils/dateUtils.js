@@ -19,3 +19,18 @@ export function formatDate(date) {
     // Return formatted date
     return `${day}.${month}.${year}`;
   }
+
+  export function formatContractLength(totalMonths) {
+    if (!totalMonths && totalMonths !== 0) return "";
+    
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    
+    if (years > 0 && months > 0) {
+      return `${years} year${years !== 1 ? 's' : ''} and ${months} month${months !== 1 ? 's' : ''}`;
+    } else if (years > 0) {
+      return `${years} year${years !== 1 ? 's' : ''}`;
+    } else {
+      return `${months} month${months !== 1 ? 's' : ''}`;
+    }
+  }
