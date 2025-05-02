@@ -331,7 +331,7 @@ if (companies.length === 0 && !isLoading) {
            <option value="">Select a company</option>
            {companies.map((company) => (
              <option key={company._id} value={company._id}>
-                {company.name} - {company.location}
+                {company.name}
             </option>
             ))}
             </select>
@@ -451,12 +451,7 @@ if (companies.length === 0 && !isLoading) {
                 </p>
               )}
               
-              <p className="contract-total">
-                Total: {contractYears > 0 ? `${contractYears} year${contractYears !== 1 ? 's' : ''}` : ''}
-                {contractYears > 0 && contractMonths > 0 ? ' and ' : ''}
-                {contractMonths > 0 ? `${contractMonths} month${contractMonths !== 1 ? 's' : ''}` : ''}
-                {contractYears === 0 && contractMonths === 0 ? '0 months' : ''}
-              </p>
+
             </div>
             
             <div className={styles.formActions}>

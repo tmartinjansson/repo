@@ -390,12 +390,6 @@ export default function CreateEmployee() {
                 </p>
               )}
               
-              <p className="contract-total">
-                Total: {contractYears > 0 ? `${contractYears} year${contractYears !== 1 ? 's' : ''}` : ''}
-                {contractYears > 0 && contractMonths > 0 ? ' and ' : ''}
-                {contractMonths > 0 ? `${contractMonths} month${contractMonths !== 1 ? 's' : ''}` : ''}
-                {contractYears === 0 && contractMonths === 0 ? '0 months' : ''}
-              </p>
             </div>
             
             <div className="form-group">

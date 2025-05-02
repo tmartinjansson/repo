@@ -42,6 +42,22 @@ export default function ManageEmployee() {
     }
   };
   
+  // Calculate contract review date (3 months before contract end)
+  const calculateReviewDate = (startDate, contractLength) => {
+    if (!startDate || contractLength === undefined) return null;
+    
+    const start = new Date(startDate);
+    // Add contract length in months to start date
+    const endDate = new Date(start);
+    endDate.setMonth(endDate.getMonth() + contractLength);
+    
+    // Subtract 3 months for review date
+    const reviewDate = new Date(endDate);
+    reviewDate.setMonth(reviewDate.getMonth() - 3);
+    
+    return reviewDate;
+  };
+  
   if (loading) {
     return <div className={styles.loading}>Loading employees...</div>;
   }
@@ -108,7 +124,13 @@ export default function ManageEmployee() {
                   <p><strong>Start Date:</strong> {new Date(employee.startDate).toLocaleDateString()}</p>
                 )}
                 {employee.contractLength !== undefined && (
-                <p><strong>Contract Length:</strong> {formatContractLength(employee.contractLength)}</p>
+                  <p><strong>Contract Length:</strong> {formatContractLength(employee.contractLength)}</p>
+                )}
+                {/* Add Contract Review Date */}
+                {employee.startDate && employee.contractLength !== undefined && (
+                  <p><strong>Date of Contract Review:</strong> {
+                    calculateReviewDate(employee.startDate, employee.contractLength)?.toLocaleDateString() || "N/A"
+                  }</p>
                 )}
               </div>
               
