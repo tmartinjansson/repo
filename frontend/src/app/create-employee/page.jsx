@@ -255,20 +255,6 @@ export default function CreateEmployee() {
             </div>
             
             <div className="form-group">
-              <label className="form-label" htmlFor="position">Position</label>
-              <input
-                id="position"
-                className="form-input"
-                type="text"
-                placeholder="Position is not required"
-                {...register("position")}
-              />
-              {errors.position && (
-                <p className="form-error">{errors.position.message}</p>
-              )}
-            </div>
-            
-            <div className="form-group">
               <label className="form-label" htmlFor="company">Company</label>
               <select
                 id="company"

@@ -126,7 +126,6 @@ export default function ManageEmployee() {
               </div>
 
               <div className={styles.employeeDetails}>
-                <p><strong>Position:</strong> {employee.position}</p>
                 <p><strong>Company:</strong> {employee.company?.name || "Unknown"}</p>
                 {employee.startDate && (
                   <p><strong>Start Date:</strong> {formatDate(new Date(employee.startDate))}</p>

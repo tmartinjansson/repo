@@ -124,7 +124,6 @@ export default function EditEmployee() {
       reset({
         name: data.name,
         surname: data.surname,
-        position: data.position,
         company: data.company?._id,
         startDate: data.startDate ? new Date(data.startDate).toISOString().split("T")[0] : "",
         contractLengthYears: Math.floor(data.contractLength / 12) || 0,
@@ -322,20 +321,6 @@ export default function EditEmployee() {
               />
               {errors.surname && (
                 <p className="form-error">{errors.surname.message}</p>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="position">Position</label>
-              <input
-                id="position"
-                className="form-input"
-                type="text"
-                placeholder="Position is not required"
-                {...register("position")}
-              />
-              {errors.position && (
-                <p className="form-error">{errors.position.message}</p>
               )}
             </div>
 

@@ -12,11 +12,6 @@ const EmployeeSchema = mongoose.Schema(
       required: [true, "Name is required"],
       trim: true
     },
-    position: {
-      type: String,
-      required: [false, "Position is not required"],
-      trim: true
-    },
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
