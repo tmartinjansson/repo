@@ -223,17 +223,6 @@ function EditCompanyForm() {
           </div>
           
           <div className="form-group">
-            <label className="form-label" htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              className="form-input"
-              rows="3"
-              placeholder="Enter company description"
-              {...register("description")}
-            />
-          </div>
-          
-          <div className="form-group">
             <label className="form-label">Contract Length</label>
             
             <div className="contract-length-container" style={{ display: "flex", marginBottom: "10px" }}>

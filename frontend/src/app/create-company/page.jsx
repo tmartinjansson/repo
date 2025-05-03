@@ -215,18 +215,7 @@ export default function CreateCompany() {
                 <p className="form-error">{errors.location.message}</p>
               )}
             </div>
-            
-            <div className="form-group">
-              <label className="form-label" htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                className="form-input"
-                rows="3"
-                placeholder="Description not required"
-                {...register("description")}
-              />
-            </div>
-            
+                      
             <div className="form-group">
               <label className="form-label">Contract Length</label>
               

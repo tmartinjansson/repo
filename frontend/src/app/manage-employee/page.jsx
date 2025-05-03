@@ -12,7 +12,6 @@ export default function ManageEmployee() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     fetchEmployees();
@@ -35,7 +34,6 @@ export default function ManageEmployee() {
       await deleteEmployee(id);
       // Update the local state
       setEmployees(employees.filter(employee => employee._id !== id));
-      setDeleteConfirm(null);
     } catch (err) {
       console.error("Error deleting employee:", err);
       setError(err.response?.data?.message || "Failed to delete employee. Please try again.");
@@ -116,7 +114,7 @@ export default function ManageEmployee() {
                   </Link>
                   <button
                     className="button button-danger"
-                    onClick={() => setDeleteConfirm(employee._id)}
+                    onClick={() => handleDelete(employee._id)}
                   >
                     Delete
                   </button>
@@ -152,26 +150,6 @@ export default function ManageEmployee() {
                   }</p>
                 )}
               </div>
-
-              {deleteConfirm === employee._id && (
-                <div className={styles.confirmDelete}>
-                  <p>Are you sure you want to delete this employee?</p>
-                  <div className={styles.confirmButtons}>
-                    <button
-                      onClick={() => handleDelete(employee._id)}
-                      className="button button-danger"
-                    >
-                      Yes, Delete
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(null)}
-                      className="button"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>

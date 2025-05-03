@@ -12,10 +12,6 @@ const CompanySchema = mongoose.Schema(
       required: [true, "Location is required"],
       trim: true
     },
-    description: {
-      type: String,
-      trim: true
-    },
     contractLength: {
       type: Number,
       default: 12 // default contract length in months

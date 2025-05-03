@@ -12,7 +12,6 @@ export default function ManageCompany() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   
   useEffect(() => {
@@ -36,7 +35,6 @@ export default function ManageCompany() {
       await deleteCompany(id);
       // Update the local state
       setCompanies(companies.filter(company => company._id !== id));
-      setDeleteConfirm(null);
     } catch (err) {
       console.error("Error deleting company:", err);
       setDeleteError(err.response?.data?.message || "Failed to delete company. Please try again.");
@@ -52,9 +50,9 @@ export default function ManageCompany() {
         setDeleteError(null);
       }, 5000);
     } else {
-      // Clear any previous error and show confirmation
+      // Clear any previous error and proceed with deletion
       setDeleteError(null);
-      setDeleteConfirm(company._id);
+      handleDelete(company._id);
     }
   };
   
@@ -126,33 +124,10 @@ export default function ManageCompany() {
               <div className={styles.companyDetails}>
                 <p><strong>Location:</strong> {company.location}</p>
                 <p><strong>Employees:</strong> {company.employeeCount}</p>
-                {company.description && (
-                  <p><strong>Description:</strong> {company.description}</p>
-                )}
-                {company.contractLength && (
+                  {company.contractLength && (
                   <p><strong>Contract Length:</strong> {company.contractLength} months</p>
                 )}
               </div>
-              
-              {deleteConfirm === company._id && (
-                <div className={styles.confirmDelete}>
-                  <p>Are you sure you want to delete this company?</p>
-                  <div className={styles.confirmButtons}>
-                    <button 
-                      onClick={() => handleDelete(company._id)}
-                      className="button button-danger"
-                    >
-                      Yes, Delete
-                    </button>
-                    <button 
-                      onClick={() => setDeleteConfirm(null)}
-                      className="button"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>
