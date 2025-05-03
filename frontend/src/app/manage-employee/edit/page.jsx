@@ -35,6 +35,8 @@ export default function EditEmployee() {
     reset
   } = useForm({
     defaultValues: {
+      // Set today's date as the default only if we don't have an employee's start date
+      startDate: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
       contractLengthYears: 0,
       contractLengthMonths: 0,
       reviewDate: ""
@@ -46,9 +48,12 @@ export default function EditEmployee() {
   const watchContractLengthYears = watch("contractLengthYears");
   const watchContractLengthMonths = watch("contractLengthMonths");
 
-  //fix server-client mismatch
+  // Add to your useEffect that runs on component mount
   useEffect(() => {
     setIsMounted(true);
+    // Set default start date to today
+    const today = new Date().toISOString().split('T')[0];
+    setStartDate(today);
   }, []);
 
   useEffect(() => {
@@ -67,12 +72,12 @@ export default function EditEmployee() {
   useEffect(() => {
     if (watchStartDate && (watchContractLengthYears > 0 || watchContractLengthMonths > 0)) {
       const totalMonths = (Number(watchContractLengthYears) || 0) * 12 + (Number(watchContractLengthMonths) || 0);
-      
+
       // Calculate review date (3 months before end date)
       const reviewDate = calculateContractReviewDate(watchStartDate, totalMonths);
-      
+
       setCalculatedReviewDate(reviewDate);
-      
+
       // Set the form value too (but it will be disabled)
       if (reviewDate) {
         const formattedDate = reviewDate.toISOString().split("T")[0];
@@ -125,10 +130,12 @@ export default function EditEmployee() {
         name: data.name,
         surname: data.surname,
         company: data.company?._id,
-        startDate: data.startDate ? new Date(data.startDate).toISOString().split("T")[0] : "",
+        startDate: data.startDate
+          ? new Date(data.startDate).toISOString().split("T")[0]
+          : new Date().toISOString().split('T')[0], // Use today if no date
         contractLengthYears: Math.floor(data.contractLength / 12) || 0,
         contractLengthMonths: data.contractLength % 12 || 0,
-        reviewDate: ""  // Reset review date as we'll calculate it
+        reviewDate: ""
       });
 
       // Set contract length state
@@ -148,34 +155,46 @@ export default function EditEmployee() {
   };
 
   const handleMonthsChange = (e) => {
-    let value = parseInt(e.target.value) || 0;
+    // Parse the number directly from the input value
+    const inputValue = e.target.value;
 
-    // Handle values outside of 0-11 range
-    if (value > 11) {
-      // Roll over to years
-      const additionalYears = Math.floor(value / 12);
-      const remainingMonths = value % 12;
-
-      const newYears = contractYears + additionalYears;
-      setContractYears(newYears);
-      setValue("contractLengthYears", newYears);
-
-      value = remainingMonths;
-    } else if (value < 0) {
-      // Only allow negative rollover if we have years to deduct from
-      if (contractYears > 0) {
-        const newYears = contractYears - 1;
-        setContractYears(newYears);
-        setValue("contractLengthYears", newYears);
-        value = 12 + value; // value is negative, so this is 12 - |value|
-      } else {
-        // Can't go below 0 years and 0 months
-        value = 0;
-      }
+    // Handle empty input case (user is clearing the field)
+    if (inputValue === "") {
+      setContractMonths(0);
+      return;
     }
 
-    setContractMonths(value);
-    setValue("contractLengthMonths", value);
+    // Convert to number for state
+    let numValue = parseInt(inputValue, 10);
+
+    // Only update if it's a valid number
+    if (!isNaN(numValue)) {
+      // Handle values outside of 0-11 range
+      if (numValue > 11) {
+        // Roll over to years
+        const additionalYears = Math.floor(numValue / 12);
+        const remainingMonths = numValue % 12;
+
+        const newYears = contractYears + additionalYears;
+        setContractYears(newYears);
+        setValue("contractLengthYears", newYears);
+
+        numValue = remainingMonths;
+      } else if (numValue < 0) {
+        // Only allow negative rollover if we have years to deduct from
+        if (contractYears > 0) {
+          const newYears = contractYears - 1;
+          setContractYears(newYears);
+          setValue("contractLengthYears", newYears);
+          numValue = 12 + numValue; // value is negative, so this is 12 - |value|
+        } else {
+          // Can't go below 0 years and 0 months
+          numValue = 0;
+        }
+      }
+
+      setContractMonths(numValue);
+    }
   };
 
   // Increment/decrement buttons handlers
@@ -377,17 +396,15 @@ export default function EditEmployee() {
                       id="contractLengthYears"
                       className="form-input"
                       type="number"
-                      value={contractYears}
                       min="0"
-                      placeholder="Years"
-                      onChange={handleYearsChange}
-                      style={{ width: "70px", textAlign: "center" }}
+                      placeholder="0"
                       {...register("contractLengthYears", {
                         valueAsNumber: true,
                         min: {
                           value: 0,
                           message: "Years cannot be negative"
-                        }
+                        },
+                        onChange: (e) => handleYearsChange(e)
                       })}
                     />
                     <button
@@ -417,12 +434,9 @@ export default function EditEmployee() {
                       id="contractLengthMonths"
                       className="form-input"
                       type="number"
-                      value={contractMonths}
                       min="0"
                       max="11"
-                      placeholder="Months"
-                      onChange={handleMonthsChange}
-                      style={{ width: "70px", textAlign: "center" }}
+                      placeholder="0"
                       {...register("contractLengthMonths", {
                         valueAsNumber: true,
                         min: {
@@ -437,7 +451,8 @@ export default function EditEmployee() {
                           atLeastOneMonth: (value, formValues) =>
                             (Number(formValues.contractLengthYears) > 0 || Number(value) > 0) ||
                             "Total contract length must be at least 1 month"
-                        }
+                        },
+                        onChange: (e) => handleMonthsChange(e)
                       })}
                     />
                     <button
@@ -462,13 +477,13 @@ export default function EditEmployee() {
             {/* Contract Review Date section - simplified */}
             <div className="form-group">
               <label className="form-label">Date of Contract Review</label>
-              
+
               {calculatedReviewDate && (
                 <div className="calculated-date-info" style={{ marginBottom: "10px", fontSize: "0.9em", color: "#666" }}>
                   Default: 3 months before contract end ({formatDate(calculatedReviewDate)})
                 </div>
               )}
-              
+
               <div className="form-input" style={{ backgroundColor: "#f5f5f5", padding: "0.5rem", border: "1px solid #ccc" }}>
                 {calculatedReviewDate ? formatDate(calculatedReviewDate) : "Will be calculated when contract details are set"}
               </div>

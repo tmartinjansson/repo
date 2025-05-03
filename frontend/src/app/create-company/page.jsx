@@ -13,13 +13,13 @@ export default function CreateCompany() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   const [isMounted, setIsMounted] = useState(false); //fix server-client mismatch
-  
+
   // State for contract length
   const [contractYears, setContractYears] = useState(0);
   const [contractMonths, setContractMonths] = useState(0);
-  
-  const { 
-    register, 
+
+  const {
+    register,
     handleSubmit,
     setValue,
     formState: { errors },
@@ -49,42 +49,68 @@ export default function CreateCompany() {
     };
   }, [isSuccess]);
 
+
   // Handle changes to contract length
   const handleYearsChange = (e) => {
-    const value = parseInt(e.target.value) || 0;
-    setContractYears(value >= 0 ? value : 0);
-    setValue("contractLengthYears", value >= 0 ? value : 0);
+    // Parse the number directly from the input value
+    const inputValue = e.target.value;
+
+    // Handle empty input case (user is clearing the field)
+    if (inputValue === "") {
+      setContractYears(0);
+      return;
+    }
+
+    // Convert to number for state
+    const numValue = parseInt(inputValue, 10);
+
+    // Only update if it's a valid number
+    if (!isNaN(numValue)) {
+      setContractYears(numValue >= 0 ? numValue : 0);
+    }
   };
 
   const handleMonthsChange = (e) => {
-    let value = parseInt(e.target.value) || 0;
-    
-    // Handle values outside of 0-11 range
-    if (value > 11) {
-      // Roll over to years
-      const additionalYears = Math.floor(value / 12);
-      const remainingMonths = value % 12;
-      
-      const newYears = contractYears + additionalYears;
-      setContractYears(newYears);
-      setValue("contractLengthYears", newYears);
-      
-      value = remainingMonths;
-    } else if (value < 0) {
-      // Only allow negative rollover if we have years to deduct from
-      if (contractYears > 0) {
-        const newYears = contractYears - 1;
+    // Parse the number directly from the input value
+    const inputValue = e.target.value;
+
+    // Handle empty input case (user is clearing the field)
+    if (inputValue === "") {
+      setContractMonths(0);
+      return;
+    }
+
+    // Convert to number for state
+    let numValue = parseInt(inputValue, 10);
+
+    // Only update if it's a valid number
+    if (!isNaN(numValue)) {
+      // Handle values outside of 0-11 range
+      if (numValue > 11) {
+        // Roll over to years
+        const additionalYears = Math.floor(numValue / 12);
+        const remainingMonths = numValue % 12;
+
+        const newYears = contractYears + additionalYears;
         setContractYears(newYears);
         setValue("contractLengthYears", newYears);
-        value = 12 + value; // value is negative, so this is 12 - |value|
-      } else {
-        // Can't go below 0 years and 0 months
-        value = 0;
+
+        numValue = remainingMonths;
+      } else if (numValue < 0) {
+        // Only allow negative rollover if we have years to deduct from
+        if (contractYears > 0) {
+          const newYears = contractYears - 1;
+          setContractYears(newYears);
+          setValue("contractLengthYears", newYears);
+          numValue = 12 + numValue; // value is negative, so this is 12 - |value|
+        } else {
+          // Can't go below 0 years and 0 months
+          numValue = 0;
+        }
       }
+
+      setContractMonths(numValue);
     }
-    
-    setContractMonths(value);
-    setValue("contractLengthMonths", value);
   };
 
   // Increment/decrement buttons handlers
@@ -130,17 +156,17 @@ export default function CreateCompany() {
     setError("");
     setIsSuccess(false);
     setResponseMessage("");
-    
+
     try {
       console.log("Contract Length Data:", {
         years: data.contractLengthYears,
         months: data.contractLengthMonths
       });
-      
+
       // Calculate total contract length in months
-      const totalContractLength = 
+      const totalContractLength =
         (Number(data.contractLengthYears) || 0) * 12 + (Number(data.contractLengthMonths) || 0);
-      
+
       console.log("Calculated total months:", totalContractLength);
 
       // Create company data with total contract length
@@ -154,25 +180,25 @@ export default function CreateCompany() {
       await createCompany(companyData);
       setIsSuccess(true);
       setResponseMessage("Company created successfully!");
-      
+
       // Reset form and state
       reset();
       setContractYears(0);
       setContractMonths(0);
-      
+
       setIsSubmitting(false);
-    
+
     } catch (err) {
       console.error("Error creating company:", err);
       setError(err.response?.data?.message || "Failed to create company. Please try again.");
       setIsSubmitting(false);
     }
   };
- 
+
   return (
     <div className={styles.container}>
       <h1 className="page-title">Create New Company</h1>
-      
+
       {isMounted && isSuccess && responseMessage && (
         <div className="successMessage">
           <p>{responseMessage}</p>
@@ -180,7 +206,7 @@ export default function CreateCompany() {
       )}
 
       {isMounted && error && <div className="errorMessage">{error}</div>}
-      
+
       {isMounted && (
         <div className="form-container">
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -191,15 +217,15 @@ export default function CreateCompany() {
                 className="form-input"
                 type="text"
                 placeholder="Company name is required"
-                {...register("name", { 
-                  required: "Company name is required" 
+                {...register("name", {
+                  required: "Company name is required"
                 })}
               />
               {errors.name && (
                 <p className="form-error">{errors.name.message}</p>
               )}
             </div>
-            
+
             <div className="form-group">
               <label className="form-label" htmlFor="location">Location</label>
               <input
@@ -207,24 +233,24 @@ export default function CreateCompany() {
                 className="form-input"
                 type="text"
                 placeholder="Location is required"
-                {...register("location", { 
-                  required: "Location is required" 
+                {...register("location", {
+                  required: "Location is required"
                 })}
               />
               {errors.location && (
                 <p className="form-error">{errors.location.message}</p>
               )}
             </div>
-                      
+
             <div className="form-group">
               <label className="form-label">Contract Length</label>
-              
+
               <div className="contract-length-container" style={{ display: "flex", marginBottom: "10px" }}>
                 <div style={{ marginRight: "20px" }}>
                   <label htmlFor="contractLengthYears" style={{ marginRight: "10px" }}>Years:</label>
                   <div style={{ display: "flex", alignItems: "center" }}>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={decrementYears}
                       className="contract-btn"
                       disabled={contractYears === 0}
@@ -236,21 +262,19 @@ export default function CreateCompany() {
                       id="contractLengthYears"
                       className="form-input"
                       type="number"
-                      value={contractYears}
                       min="0"
-                      placeholder="Years"
-                      onChange={handleYearsChange}
-                      style={{ width: "70px", textAlign: "center" }}
-                      {...register("contractLengthYears", { 
+                      placeholder="0"
+                      {...register("contractLengthYears", {
                         valueAsNumber: true,
                         min: {
                           value: 0,
                           message: "Years cannot be negative"
-                        }
+                        },
+                        onChange: (e) => handleYearsChange(e)
                       })}
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={incrementYears}
                       className="contract-btn"
                       style={{ padding: "0 10px", marginLeft: "5px" }}
@@ -259,12 +283,12 @@ export default function CreateCompany() {
                     </button>
                   </div>
                 </div>
-                
+
                 <div>
                   <label htmlFor="contractLengthMonths" style={{ marginRight: "10px" }}>Months:</label>
                   <div style={{ display: "flex", alignItems: "center" }}>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={decrementMonths}
                       className="contract-btn"
                       disabled={contractYears === 0 && contractMonths === 0}
@@ -276,13 +300,10 @@ export default function CreateCompany() {
                       id="contractLengthMonths"
                       className="form-input"
                       type="number"
-                      value={contractMonths}
                       min="0"
                       max="11"
-                      placeholder="Months"
-                      onChange={handleMonthsChange}
-                      style={{ width: "70px", textAlign: "center" }}
-                      {...register("contractLengthMonths", { 
+                      placeholder="0"
+                      {...register("contractLengthMonths", {
                         valueAsNumber: true,
                         min: {
                           value: 0,
@@ -293,14 +314,15 @@ export default function CreateCompany() {
                           message: "Use years field for 12+ months"
                         },
                         validate: {
-                          atLeastOneMonth: (value, formValues) => 
-                            (Number(formValues.contractLengthYears) > 0 || Number(value) > 0) || 
+                          atLeastOneMonth: (value, formValues) =>
+                            (Number(formValues.contractLengthYears) > 0 || Number(value) > 0) ||
                             "Total contract length must be at least 1 month"
-                        }
+                        },
+                        onChange: (e) => handleMonthsChange(e)
                       })}
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={incrementMonths}
                       className="contract-btn"
                       style={{ padding: "0 10px", marginLeft: "5px" }}
@@ -310,13 +332,13 @@ export default function CreateCompany() {
                   </div>
                 </div>
               </div>
-              
+
               {(errors.contractLengthYears || errors.contractLengthMonths) && (
                 <p className="form-error">
                   {errors.contractLengthYears?.message || errors.contractLengthMonths?.message}
                 </p>
               )}
-              
+
               <p className="contract-total">
                 Total: {contractYears > 0 ? `${contractYears} year${contractYears !== 1 ? 's' : ''}` : ''}
                 {contractYears > 0 && contractMonths > 0 ? ' and ' : ''}
@@ -324,17 +346,17 @@ export default function CreateCompany() {
                 {contractYears === 0 && contractMonths === 0 ? '0 months' : ''}
               </p>
             </div>
-            
+
             <div className={styles.formActions}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={styles.cancelButton}
                 onClick={() => router.back()}
               >
                 Cancel
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="form-button"
                 disabled={isSubmitting}
               >
@@ -344,7 +366,7 @@ export default function CreateCompany() {
           </form>
         </div>
       )}
-      
+
       {!isMounted && (
         <div className="loading-container">
           <p>Loading form...</p>

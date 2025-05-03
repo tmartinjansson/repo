@@ -17,7 +17,8 @@ export function formatDate(date) {
   const year = dateObj.getFullYear();
   
   // Return formatted date
-  return `${day}.${month}.${year}`;
+  //return `${day}.${month}.${year}`;
+  return `${year}-${month}-${day}`;
 }
 
 /**

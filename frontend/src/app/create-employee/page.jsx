@@ -15,19 +15,27 @@ export default function CreateEmployee() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   const [isMounted, setIsMounted] = useState(false); // Fix server-client mismatch
-  
+
   // State for contract length
   const [contractYears, setContractYears] = useState(0);
   const [contractMonths, setContractMonths] = useState(0);
-  
-  const { 
-    register, 
+
+  const {
+    register,
     handleSubmit,
     control,
     setValue,
     formState: { errors },
     reset
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      // Set today's date as the default start date
+      startDate: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
+      contractLengthYears: 0,
+      contractLengthMonths: 0
+    }
+  });
+  
 
   // Fix server-client mismatch
   useEffect(() => {
@@ -67,41 +75,67 @@ export default function CreateEmployee() {
 
   // Handle changes to contract length
   const handleYearsChange = (e) => {
-    const value = parseInt(e.target.value) || 0;
-    setContractYears(value >= 0 ? value : 0);
-    setValue("contractLengthYears", value >= 0 ? value : 0);
+    // Parse the number directly from the input value
+    const inputValue = e.target.value;
+
+    // Handle empty input case (user is clearing the field)
+    if (inputValue === "") {
+      setContractYears(0);
+      return;
+    }
+
+    // Convert to number for state
+    const numValue = parseInt(inputValue, 10);
+
+    // Only update if it's a valid number
+    if (!isNaN(numValue)) {
+      setContractYears(numValue >= 0 ? numValue : 0);
+    }
   };
 
   const handleMonthsChange = (e) => {
-    let value = parseInt(e.target.value) || 0;
-    
-    // Handle values outside of 0-11 range
-    if (value > 11) {
-      // Roll over to years
-      const additionalYears = Math.floor(value / 12);
-      const remainingMonths = value % 12;
-      
-      const newYears = contractYears + additionalYears;
-      setContractYears(newYears);
-      setValue("contractLengthYears", newYears);
-      
-      value = remainingMonths;
-    } else if (value < 0) {
-      // Only allow negative rollover if we have years to deduct from
-      if (contractYears > 0) {
-        const newYears = contractYears - 1;
+    // Parse the number directly from the input value
+    const inputValue = e.target.value;
+
+    // Handle empty input case (user is clearing the field)
+    if (inputValue === "") {
+      setContractMonths(0);
+      return;
+    }
+
+    // Convert to number for state
+    let numValue = parseInt(inputValue, 10);
+
+    // Only update if it's a valid number
+    if (!isNaN(numValue)) {
+      // Handle values outside of 0-11 range
+      if (numValue > 11) {
+        // Roll over to years
+        const additionalYears = Math.floor(numValue / 12);
+        const remainingMonths = numValue % 12;
+
+        const newYears = contractYears + additionalYears;
         setContractYears(newYears);
         setValue("contractLengthYears", newYears);
-        value = 12 + value; // value is negative, so this is 12 - |value|
-      } else {
-        // Can't go below 0 years and 0 months
-        value = 0;
+
+        numValue = remainingMonths;
+      } else if (numValue < 0) {
+        // Only allow negative rollover if we have years to deduct from
+        if (contractYears > 0) {
+          const newYears = contractYears - 1;
+          setContractYears(newYears);
+          setValue("contractLengthYears", newYears);
+          numValue = 12 + numValue; // value is negative, so this is 12 - |value|
+        } else {
+          // Can't go below 0 years and 0 months
+          numValue = 0;
+        }
       }
+
+      setContractMonths(numValue);
     }
-    
-    setContractMonths(value);
-    setValue("contractLengthMonths", value);
   };
+
 
   // Increment/decrement buttons handlers
   const incrementMonths = () => {
@@ -149,9 +183,9 @@ export default function CreateEmployee() {
 
     try {
       // Calculate total contract length in months
-      const totalContractLength = 
+      const totalContractLength =
         (Number(data.contractLengthYears) || 0) * 12 + (Number(data.contractLengthMonths) || 0);
-      
+
       // Create employee data with total contract length
       const employeeData = {
         ...data,
@@ -159,16 +193,16 @@ export default function CreateEmployee() {
         contractLengthYears: Number(data.contractLengthYears) || 0,
         contractLengthMonths: Number(data.contractLengthMonths) || 0
       };
-      
+
       await createEmployee(employeeData);
       setIsSuccess(true);
       setResponseMessage("Employee created successfully!");
-      
+
       // Reset form and state
       reset();
       setContractYears(0);
       setContractMonths(0);
-      
+
       setIsSubmitting(false);
     } catch (err) {
       console.error("Error creating employee:", err);
@@ -194,7 +228,7 @@ export default function CreateEmployee() {
         <h1 className="page-title">Create New Employee</h1>
         <div className={styles.notice}>
           <p>You need to create at least one company before adding employees.</p>
-          <button 
+          <button
             onClick={() => router.push("/create-company")}
             className="form-button"
           >
@@ -208,17 +242,17 @@ export default function CreateEmployee() {
   return (
     <div className={styles.container}>
       <h1 className="page-title">Create New Employee</h1>
-      
+
       {isMounted && isSuccess && responseMessage && (
         <div className="successMessage">
           <p>{responseMessage}</p>
         </div>
       )}
-      
+
       {isMounted && error && (
         <div className="errorMessage">{error}</div>
       )}
-      
+
       {isMounted && companies.length > 0 && (
         <div className="form-container">
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -229,15 +263,15 @@ export default function CreateEmployee() {
                 className="form-input"
                 type="text"
                 placeholder="Surname is required"
-                {...register("surname", { 
-                  required: "Surname is required" 
+                {...register("surname", {
+                  required: "Surname is required"
                 })}
               />
               {errors.surname && (
                 <p className="form-error">{errors.surname.message}</p>
               )}
             </div>
-            
+
             <div className="form-group">
               <label className="form-label" htmlFor="name">Name</label>
               <input
@@ -245,22 +279,22 @@ export default function CreateEmployee() {
                 className="form-input"
                 type="text"
                 placeholder="Name is required"
-                {...register("name", { 
-                  required: "Name is required" 
+                {...register("name", {
+                  required: "Name is required"
                 })}
               />
               {errors.name && (
                 <p className="form-error">{errors.name.message}</p>
               )}
             </div>
-            
+
             <div className="form-group">
               <label className="form-label" htmlFor="company">Company</label>
               <select
                 id="company"
                 className="form-input"
-                {...register("company", { 
-                  required: "Company is required" 
+                {...register("company", {
+                  required: "Company is required"
                 })}
               >
                 <option value="">Select a company</option>
@@ -274,16 +308,16 @@ export default function CreateEmployee() {
                 <p className="form-error">{errors.company.message}</p>
               )}
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Contract Length</label>
-              
+
               <div className="contract-length-container" style={{ display: "flex", marginBottom: "10px" }}>
                 <div style={{ marginRight: "20px" }}>
                   <label htmlFor="contractLengthYears" style={{ marginRight: "10px" }}>Years:</label>
                   <div style={{ display: "flex", alignItems: "center" }}>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={decrementYears}
                       className="contract-btn"
                       disabled={contractYears === 0}
@@ -295,21 +329,19 @@ export default function CreateEmployee() {
                       id="contractLengthYears"
                       className="form-input"
                       type="number"
-                      value={contractYears}
                       min="0"
-                      placeholder="Years"
-                      onChange={handleYearsChange}
-                      style={{ width: "70px", textAlign: "center" }}
-                      {...register("contractLengthYears", { 
+                      placeholder="0"
+                      {...register("contractLengthYears", {
                         valueAsNumber: true,
                         min: {
                           value: 0,
                           message: "Years cannot be negative"
-                        }
+                        },
+                        onChange: (e) => handleYearsChange(e)
                       })}
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={incrementYears}
                       className="contract-btn"
                       style={{ padding: "0 10px", marginLeft: "5px" }}
@@ -318,12 +350,12 @@ export default function CreateEmployee() {
                     </button>
                   </div>
                 </div>
-                
+
                 <div>
                   <label htmlFor="contractLengthMonths" style={{ marginRight: "10px" }}>Months:</label>
                   <div style={{ display: "flex", alignItems: "center" }}>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={decrementMonths}
                       className="contract-btn"
                       disabled={contractYears === 0 && contractMonths === 0}
@@ -335,13 +367,10 @@ export default function CreateEmployee() {
                       id="contractLengthMonths"
                       className="form-input"
                       type="number"
-                      value={contractMonths}
                       min="0"
                       max="11"
-                      placeholder="Months"
-                      onChange={handleMonthsChange}
-                      style={{ width: "70px", textAlign: "center" }}
-                      {...register("contractLengthMonths", { 
+                      placeholder="0"
+                      {...register("contractLengthMonths", {
                         valueAsNumber: true,
                         min: {
                           value: 0,
@@ -352,14 +381,15 @@ export default function CreateEmployee() {
                           message: "Use years field for 12+ months"
                         },
                         validate: {
-                          atLeastOneMonth: (value, formValues) => 
-                            (Number(formValues.contractLengthYears) > 0 || Number(value) > 0) || 
+                          atLeastOneMonth: (value, formValues) =>
+                            (Number(formValues.contractLengthYears) > 0 || Number(value) > 0) ||
                             "Total contract length must be at least 1 month"
-                        }
+                        },
+                        onChange: (e) => handleMonthsChange(e)
                       })}
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={incrementMonths}
                       className="contract-btn"
                       style={{ padding: "0 10px", marginLeft: "5px" }}
@@ -369,15 +399,15 @@ export default function CreateEmployee() {
                   </div>
                 </div>
               </div>
-              
+
               {(errors.contractLengthYears || errors.contractLengthMonths) && (
                 <p className="form-error">
                   {errors.contractLengthYears?.message || errors.contractLengthMonths?.message}
                 </p>
               )}
-              
+
             </div>
-            
+
             <div className="form-group">
               <label className="form-label" htmlFor="startDate">Start Date</label>
               <input
@@ -387,17 +417,17 @@ export default function CreateEmployee() {
                 {...register("startDate")}
               />
             </div>
-            
+
             <div className={styles.formActions}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={styles.cancelButton}
                 onClick={() => router.back()}
               >
                 Cancel
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="form-button"
                 disabled={isSubmitting}
               >
@@ -407,7 +437,7 @@ export default function CreateEmployee() {
           </form>
         </div>
       )}
-      
+
       {!isMounted && !isLoading && (
         <div className="loading-container">
           <p>Loading form...</p>
