@@ -1,0 +1,68 @@
+.container {
+    width: 100%;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .companyList {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .companyDetails {
+    margin-top: 1rem;
+  }
+  
+  .companyDetails p {
+    margin-bottom: 0.5rem;
+  }
+  
+  .confirmDelete {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #fff1f0;
+    border: 1px solid #ffccc7;
+    border-radius: 4px;
+  }
+  
+  .confirmButtons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+  }
+  
+  .error {
+    background-color: #fff1f0;
+    border: 1px solid #ffccc7;
+    color: #ff4d4f;
+    padding: 1.5rem;
+    border-radius: 4px;
+    text-align: center;
+  }
+  
+  .error p {
+    margin-bottom: 1rem;
+  }
+  
+  .empty {
+    background-color: #f5f5f5;
+    padding: 2rem;
+    border-radius: 4px;
+    text-align: center;
+  }
+  
+  .empty p {
+    margin-bottom: 1rem;
+  }

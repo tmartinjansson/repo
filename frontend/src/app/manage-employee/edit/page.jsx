@@ -25,6 +25,11 @@ export default function EditEmployee() {
   // State for contract review date
   const [calculatedReviewDate, setCalculatedReviewDate] = useState(null);
   const [startDate, setStartDate] = useState("");
+  
+  // New state for manual date setting
+  const [useManualReviewDate, setUseManualReviewDate] = useState(false);
+  const [manualReviewDate, setManualReviewDate] = useState("");
+  const [minReviewDate, setMinReviewDate] = useState("");
 
   const {
     register,
@@ -39,7 +44,8 @@ export default function EditEmployee() {
       startDate: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
       contractLengthYears: 0,
       contractLengthMonths: 0,
-      reviewDate: ""
+      reviewDate: "",
+      useManualReviewDate: false
     }
   });
 
@@ -47,6 +53,8 @@ export default function EditEmployee() {
   const watchStartDate = watch("startDate");
   const watchContractLengthYears = watch("contractLengthYears");
   const watchContractLengthMonths = watch("contractLengthMonths");
+  const watchManualReviewDate = watch("reviewDate");
+  const watchUseManualReviewDate = watch("useManualReviewDate");
 
   // Add to your useEffect that runs on component mount
   useEffect(() => {
@@ -54,6 +62,7 @@ export default function EditEmployee() {
     // Set default start date to today
     const today = new Date().toISOString().split('T')[0];
     setStartDate(today);
+    setMinReviewDate(today); // Set minimum review date to today
   }, []);
 
   useEffect(() => {
@@ -78,13 +87,13 @@ export default function EditEmployee() {
 
       setCalculatedReviewDate(reviewDate);
 
-      // Set the form value too (but it will be disabled)
-      if (reviewDate) {
+      // Only set the form value if not using manual date
+      if (reviewDate && !watchUseManualReviewDate) {
         const formattedDate = reviewDate.toISOString().split("T")[0];
         setValue("reviewDate", formattedDate);
       }
     }
-  }, [watchStartDate, watchContractLengthYears, watchContractLengthMonths, setValue]);
+  }, [watchStartDate, watchContractLengthYears, watchContractLengthMonths, setValue, watchUseManualReviewDate]);
 
   useEffect(() => {
     let timer;
@@ -125,6 +134,24 @@ export default function EditEmployee() {
         setStartDate(new Date(data.startDate).toISOString().split("T")[0]);
       }
 
+      // Check if employee has a custom review date
+      const hasCustomReviewDate = data.reviewDate && data.reviewDate !== null;
+      setUseManualReviewDate(hasCustomReviewDate);
+      
+      // Set today as the minimum review date
+      const today = new Date().toISOString().split('T')[0];
+      setMinReviewDate(today);
+      
+      if (hasCustomReviewDate) {
+        const reviewDate = new Date(data.reviewDate).toISOString().split("T")[0];
+        setManualReviewDate(reviewDate);
+        
+        // If the stored review date is in the past, update it to today
+        if (reviewDate < today) {
+          setManualReviewDate(today);
+        }
+      }
+
       // Populate form with employee data
       reset({
         name: data.name,
@@ -135,7 +162,12 @@ export default function EditEmployee() {
           : new Date().toISOString().split('T')[0], // Use today if no date
         contractLengthYears: Math.floor(data.contractLength / 12) || 0,
         contractLengthMonths: data.contractLength % 12 || 0,
-        reviewDate: ""
+        reviewDate: hasCustomReviewDate 
+          ? (new Date(data.reviewDate) < new Date(today) 
+              ? today 
+              : new Date(data.reviewDate).toISOString().split("T")[0])
+          : "",
+        useManualReviewDate: hasCustomReviewDate
       });
 
       // Set contract length state
@@ -197,6 +229,30 @@ export default function EditEmployee() {
     }
   };
 
+  // Handle manual review date checkbox
+  const handleUseManualDateChange = (e) => {
+    const checked = e.target.checked;
+    setUseManualReviewDate(checked);
+    setValue("useManualReviewDate", checked);
+    
+    // If unchecking, reset to the calculated date
+    if (!checked && calculatedReviewDate) {
+      const formattedDate = calculatedReviewDate.toISOString().split("T")[0];
+      setValue("reviewDate", formattedDate);
+    } else if (checked) {
+      // If checking and there's no date set, default to today or calculated date if it exists
+      if (!watchManualReviewDate || watchManualReviewDate === "") {
+        const today = new Date().toISOString().split('T')[0];
+        const dateToUse = calculatedReviewDate 
+          ? calculatedReviewDate.toISOString().split("T")[0] 
+          : today;
+        
+        // Use the date that's furthest in the future
+        setValue("reviewDate", dateToUse > today ? dateToUse : today);
+      }
+    }
+  };
+
   // Increment/decrement buttons handlers
   const incrementMonths = () => {
     const newValue = contractMonths + 1;
@@ -237,36 +293,44 @@ export default function EditEmployee() {
 
   const onSubmit = async (data) => {
     if (!employee) return;
-
+  
     setIsSubmitting(true);
     setError("");
     setIsSuccess(false);
     setResponseMessage("");
-
+  
     try {
       console.log("Contract Length Data:", {
         years: data.contractLengthYears,
         months: data.contractLengthMonths
       });
-
+  
       // Calculate total contract length in months
       const totalContractLength =
         (Number(data.contractLengthYears) || 0) * 12 + (Number(data.contractLengthMonths) || 0);
-
+  
       console.log("Calculated total months:", totalContractLength);
-
-      // Update employee data with total contract length and review date
+  
+      // Create the employee data object
       const employeeData = {
         ...data,
         contractLength: totalContractLength,
-        reviewDate: null  // We no longer store custom review dates
       };
-
+  
+      // Set the review date based on the checkbox
+      if (data.useManualReviewDate && data.reviewDate) {
+        employeeData.reviewDate = data.reviewDate;
+        console.log("Using manual review date:", data.reviewDate);
+      } else {
+        employeeData.reviewDate = null; // Explicitly set to null if not using manual date
+        console.log("Using default review date calculation");
+      }
+  
       await updateEmployee(employee._id, employeeData);
       setIsSuccess(true);
       setResponseMessage("Employee updated successfully!");
       setIsSubmitting(false);
-
+  
     } catch (err) {
       console.error("Error updating employee:", err);
       setError(err.response?.data?.message || "Failed to update employee. Please try again.");
@@ -379,16 +443,15 @@ export default function EditEmployee() {
             <div className="form-group">
               <label className="form-label">Contract Length</label>
 
-              <div className="contract-length-container" style={{ display: "flex", marginBottom: "10px" }}>
-                <div style={{ marginRight: "20px" }}>
-                  <label htmlFor="contractLengthYears" style={{ marginRight: "10px" }}>Years:</label>
-                  <div style={{ display: "flex", alignItems: "center" }}>
+              <div className="contract-length-container">
+                <div className="contract-length-years">
+                  <label htmlFor="contractLengthYears" className="contract-length-label">Years:</label>
+                  <div className="contract-length-input-group">
                     <button
                       type="button"
                       onClick={decrementYears}
                       className="contract-btn"
                       disabled={contractYears === 0}
-                      style={{ padding: "0 10px", marginRight: "5px" }}
                     >
                       -
                     </button>
@@ -411,22 +474,20 @@ export default function EditEmployee() {
                       type="button"
                       onClick={incrementYears}
                       className="contract-btn"
-                      style={{ padding: "0 10px", marginLeft: "5px" }}
                     >
                       +
                     </button>
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="contractLengthMonths" style={{ marginRight: "10px" }}>Months:</label>
-                  <div style={{ display: "flex", alignItems: "center" }}>
+                <div className="contract-length-months">
+                  <label htmlFor="contractLengthMonths" className="contract-length-label">Months:</label>
+                  <div className="contract-length-input-group">
                     <button
                       type="button"
                       onClick={decrementMonths}
                       className="contract-btn"
                       disabled={contractYears === 0 && contractMonths === 0}
-                      style={{ padding: "0 10px", marginRight: "5px" }}
                     >
                       -
                     </button>
@@ -459,7 +520,6 @@ export default function EditEmployee() {
                       type="button"
                       onClick={incrementMonths}
                       className="contract-btn"
-                      style={{ padding: "0 10px", marginLeft: "5px" }}
                     >
                       +
                     </button>
@@ -474,19 +534,56 @@ export default function EditEmployee() {
               )}
             </div>
 
-            {/* Contract Review Date section - simplified */}
+            {/* Contract Review Date section - updated with manual date option */}
             <div className="form-group">
               <label className="form-label">Date of Contract Review</label>
 
               {calculatedReviewDate && (
-                <div className="calculated-date-info" style={{ marginBottom: "10px", fontSize: "0.9em", color: "#666" }}>
+                <div className="calculated-date-info">
                   Default: 3 months before contract end ({formatDate(calculatedReviewDate)})
                 </div>
               )}
 
-              <div className="form-input" style={{ backgroundColor: "#f5f5f5", padding: "0.5rem", border: "1px solid #ccc" }}>
-                {calculatedReviewDate ? formatDate(calculatedReviewDate) : "Will be calculated when contract details are set"}
+              {/* Added manual date checkbox - THIS IS THE EXCEPTION WHERE INLINE STYLING IS ALLOWED */}
+              <div style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
+                <input
+                  id="useManualReviewDate"
+                  type="checkbox"
+                  style={{ marginRight: "8px" }}
+                  {...register("useManualReviewDate", {
+                    onChange: (e) => handleUseManualDateChange(e)
+                  })}
+                />
+                <label htmlFor="useManualReviewDate">Set date manually</label>
               </div>
+
+              {/* Conditional display based on checkbox */}
+              {watchUseManualReviewDate ? (
+                <div>
+                  <input
+                    id="reviewDate"
+                    className="form-input"
+                    type="date"
+                    min={minReviewDate} // Set minimum date to today
+                    {...register("reviewDate", {
+                      required: watchUseManualReviewDate ? "Review date is required when manually set" : false,
+                      validate: {
+                        futureDate: (value) => {
+                          const today = new Date().toISOString().split('T')[0];
+                          return value >= today || "Review date cannot be in the past";
+                        }
+                      }
+                    })}
+                  />
+                  {errors.reviewDate && (
+                    <p className="form-error">{errors.reviewDate.message}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="default-review-date">
+                  {calculatedReviewDate ? formatDate(calculatedReviewDate) : "Will be calculated when contract details are set"}
+                </div>
+              )}
             </div>
 
             <div className={styles.formActions}>

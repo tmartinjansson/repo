@@ -66,6 +66,31 @@ export default function ManageEmployee() {
     return reviewDate;
   };
 
+  // Function to render the review date with appropriate indication if it's manual
+  const renderReviewDate = (employee) => {
+    if (employee.reviewDate) {
+      // This is a manually set review date
+      return (
+        <div>
+          <p>
+            <strong>Date of Contract Review:</strong> {formatDate(new Date(employee.reviewDate))}
+            <span className="review-date-label">(manually set)</span>
+          </p>
+        </div>
+      );
+    } else {
+      // This is the default calculated review date
+      return (
+        <p>
+          <strong>Date of Contract Review:</strong> {
+            formatDate(calculateContractReviewDate(employee.startDate, employee.contractLength))
+          }
+          <span className="review-date-label">(default)</span>
+        </p>
+      );
+    }
+  };
+
   if (loading) {
     return <div className={styles.loading}>Loading employees...</div>;
   }
@@ -140,13 +165,9 @@ export default function ManageEmployee() {
                   }</p>
                 )}
 
-                {/* Add Contract Review Date */}
+                {/* Updated Contract Review Date section */}
                 {employee.startDate && employee.contractLength !== undefined && (
-                  <p><strong>Date of Contract Review:</strong> {
-                    (employee.reviewDate
-                      ? formatDate(new Date(employee.reviewDate))
-                      : formatDate(calculateContractReviewDate(employee.startDate, employee.contractLength)))
-                  }</p>
+                  renderReviewDate(employee)
                 )}
               </div>
             </div>

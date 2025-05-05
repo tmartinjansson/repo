@@ -1,7 +1,15 @@
 .footer {
-    margin-top: auto;
-    padding: 1rem;
-    background-color: #333;
-    color: white;
-    text-align: center;
-  }
+  margin-top: auto;
+  padding: 1rem;
+  background-color: #333;
+  color: white;
+  text-align: center;
+  /* Fixed positioning */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 48px; /* Set this to match your actual footer height */
+  box-sizing: border-box;
+}

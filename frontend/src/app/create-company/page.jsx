@@ -245,16 +245,15 @@ export default function CreateCompany() {
             <div className="form-group">
               <label className="form-label">Contract Length</label>
 
-              <div className="contract-length-container" style={{ display: "flex", marginBottom: "10px" }}>
-                <div style={{ marginRight: "20px" }}>
-                  <label htmlFor="contractLengthYears" style={{ marginRight: "10px" }}>Years:</label>
-                  <div style={{ display: "flex", alignItems: "center" }}>
+              <div className="contract-length-container">
+                <div className="contract-length-years">
+                  <label htmlFor="contractLengthYears" className="contract-length-label">Years:</label>
+                  <div className="contract-length-input-group">
                     <button
                       type="button"
                       onClick={decrementYears}
                       className="contract-btn"
                       disabled={contractYears === 0}
-                      style={{ padding: "0 10px", marginRight: "5px" }}
                     >
                       -
                     </button>
@@ -277,22 +276,20 @@ export default function CreateCompany() {
                       type="button"
                       onClick={incrementYears}
                       className="contract-btn"
-                      style={{ padding: "0 10px", marginLeft: "5px" }}
                     >
                       +
                     </button>
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="contractLengthMonths" style={{ marginRight: "10px" }}>Months:</label>
-                  <div style={{ display: "flex", alignItems: "center" }}>
+                <div className="contract-length-months">
+                  <label htmlFor="contractLengthMonths" className="contract-length-label">Months:</label>
+                  <div className="contract-length-input-group">
                     <button
                       type="button"
                       onClick={decrementMonths}
                       className="contract-btn"
                       disabled={contractYears === 0 && contractMonths === 0}
-                      style={{ padding: "0 10px", marginRight: "5px" }}
                     >
                       -
                     </button>
@@ -325,7 +322,6 @@ export default function CreateCompany() {
                       type="button"
                       onClick={incrementMonths}
                       className="contract-btn"
-                      style={{ padding: "0 10px", marginLeft: "5px" }}
                     >
                       +
                     </button>
@@ -338,19 +334,12 @@ export default function CreateCompany() {
                   {errors.contractLengthYears?.message || errors.contractLengthMonths?.message}
                 </p>
               )}
-
-              <p className="contract-total">
-                Total: {contractYears > 0 ? `${contractYears} year${contractYears !== 1 ? 's' : ''}` : ''}
-                {contractYears > 0 && contractMonths > 0 ? ' and ' : ''}
-                {contractMonths > 0 ? `${contractMonths} month${contractMonths !== 1 ? 's' : ''}` : ''}
-                {contractYears === 0 && contractMonths === 0 ? '0 months' : ''}
-              </p>
             </div>
 
             <div className={styles.formActions}>
               <button
                 type="button"
-                className={styles.cancelButton}
+                className="cancelButton"
                 onClick={() => router.back()}
               >
                 Cancel

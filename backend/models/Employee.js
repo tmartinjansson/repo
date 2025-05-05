@@ -32,8 +32,12 @@ const EmployeeSchema = mongoose.Schema(
     startDate: {
       type: Date,
       default: Date.now
-    }
-  },
+    },
+    reviewDate: {
+        type: Date,
+        default: null
+      }
+    },
   {
     timestamps: true
   }

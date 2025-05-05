@@ -1,33 +1,42 @@
 .main {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  
-  .content {
-    flex: 1;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-  }
-  
-  .container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  
-  .pageWrapper {
-    padding: 2rem 0;
-  }
-  
-  .section {
-    margin-bottom: 2rem;
-  }
-  
-  .flexBetween {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  /* Remove this if present: overflow-y: auto; */
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  /* Increase top padding to account for fixed header height */
+  padding: 2rem;
+  padding-top: 80px; /* This should be more than your header height */
+  /* Add bottom padding for footer */
+  padding-bottom: 80px; /* This should be more than your footer height */
+  /* Remove overflow property if it's causing issues */
+  /* overflow-y: auto; */
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  /* This will keep header/footer in place while content scrolls */
+  position: relative;
+}
+
+.pageWrapper {
+  padding: 2rem 0;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.flexBetween {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
